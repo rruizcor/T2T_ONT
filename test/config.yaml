@@ -5,7 +5,7 @@ references:
   hg38: {fasta: test/data/hg38.fa, exclude_bed: test/data/hg38.exclude.bed}
   chm13: {fasta: test/data/chm13.fa, exclude_bed: ""}
 chain_hg38_to_chm13: test/data/hg38ToChm13.over.chain.gz
-picard: "java -Xmx2g -jar /opt/tools/picard.jar"
+picard: picard   # bioconda wrapper, or: java -Xmx2g -jar /path/to/picard.jar
 alignment: {preset: map-ont, extra: "-y --secondary=no", sort_threads: 2, sort_mem_per_thread: 256M}
 het_sites:
   source: bcftools
