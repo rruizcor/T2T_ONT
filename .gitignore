@@ -1,0 +1,6 @@
+results/
+test/data/
+test/results*/
+test/b/
+.snakemake/
+__pycache__/

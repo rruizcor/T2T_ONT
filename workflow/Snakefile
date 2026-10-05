@@ -1,0 +1,65 @@
+import os
+import pandas as pd
+
+configfile: "config/config.yaml"
+
+
+OUT = config["outdir"]
+REFS = ["hg38", "chm13"]
+
+SAMPLES = (
+    pd.read_csv(config["samples"], sep="\t", comment="#", dtype=str)
+    .fillna("")
+    .set_index("sample", drop=False)
+)
+if SAMPLES.index.has_duplicates:
+    raise ValueError("Duplicate sample names in samples.tsv")
+
+
+def _val(sample, col):
+    return SAMPLES.loc[sample, col] if col in SAMPLES.columns else ""
+
+
+def prealigned(sample):
+    return bool(_val(sample, "bam_hg38") and _val(sample, "bam_chm13"))
+
+
+for s in SAMPLES.index:
+    if not prealigned(s) and not _val(s, "reads"):
+        raise ValueError(f"{s}: give either `reads` or both `bam_hg38` and `bam_chm13`")
+    if config["het_sites"]["source"] == "provided" and not _val(s, "het_vcf"):
+        raise ValueError(f"{s}: het_sites.source is 'provided' but het_vcf is empty")
+
+
+def ref_fa(ref):
+    return config["references"][ref]["fasta"]
+
+
+def excl(ref):
+    return config["references"][ref].get("exclude_bed", "") or ""
+
+
+RUN_CLINVAR = bool(config.get("clinvar", {}).get("vcf"))
+
+wildcard_constraints:
+    ref="hg38|chm13",
+    sample="|".join(map(str, SAMPLES.index)),
+
+
+include: "rules/reference.smk"
+include: "rules/align.smk"
+include: "rules/sites.smk"
+include: "rules/count.smk"
+include: "rules/stats.smk"
+if RUN_CLINVAR:
+
+    include: "rules/clinvar.smk"
+
+
+rule all:
+    input:
+        f"{OUT}/report/mapping_metrics.tsv",
+        f"{OUT}/report/cohort_summary.tsv",
+        f"{OUT}/report/report.md",
+        expand(f"{OUT}/stats/{{sample}}.summary.tsv", sample=SAMPLES.index),
+        ([f"{OUT}/report/clinvar_sites.tsv"] if RUN_CLINVAR else []),

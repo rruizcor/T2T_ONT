@@ -1,0 +1,3 @@
+sample	reads	bam_hg38	bam_chm13	het_vcf
+S1	test/data/S1.fastq.gz			
+S2	test/data/S2.ubam			

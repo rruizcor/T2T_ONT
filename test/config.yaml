@@ -1,0 +1,23 @@
+samples: test/samples.tsv
+outdir: test/results
+threads: {align: 2, default: 2}
+references:
+  hg38: {fasta: test/data/hg38.fa, exclude_bed: test/data/hg38.exclude.bed}
+  chm13: {fasta: test/data/chm13.fa, exclude_bed: ""}
+chain_hg38_to_chm13: test/data/hg38ToChm13.over.chain.gz
+picard: "java -Xmx2g -jar /opt/tools/picard.jar"
+alignment: {preset: map-ont, extra: "-y --secondary=no", sort_threads: 2, sort_mem_per_thread: 256M}
+het_sites:
+  source: bcftools
+  clair3_model: ""
+  clair3_platform: ont
+  min_qual: 20
+  min_depth: 15
+  vaf_min: 0.2
+  vaf_max: 0.8
+  homopolymer_len: 5
+  homopolymer_flank: 5
+pileup: {min_mapq: 20, min_baseq: 0, max_depth: 100000}
+proximal_window: 150
+stats: {min_cov: 15, delta_vaf: 0.005, high_cov: 30, coverage_bins: [15, 30, 40, 60]}
+clinvar: {vcf: test/data/clinvar.vcf.gz, min_alt_reads: 3}

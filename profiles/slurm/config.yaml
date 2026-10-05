@@ -1,0 +1,34 @@
+# snakemake --profile profiles/slurm   (needs: pip install snakemake-executor-plugin-slurm)
+executor: slurm
+jobs: 100
+software-deployment-method: conda
+latency-wait: 60
+retries: 1
+rerun-incomplete: true
+printshellcmds: true
+default-resources:
+  slurm_partition: "CHANGE_ME"
+  slurm_account: "CHANGE_ME"
+  mem_mb: 8000
+  runtime: 120
+set-resources:
+  align:
+    mem_mb: 48000
+    runtime: 720
+  ref_mmi:
+    mem_mb: 32000
+    runtime: 60
+  het_calls:
+    mem_mb: 64000
+    runtime: 720
+  count_alleles:
+    mem_mb: 4000
+    runtime: 240
+  pair_sites:
+    mem_mb: 16000
+    runtime: 240
+  sample_stats:
+    mem_mb: 16000
+  cohort_report:
+    mem_mb: 32000
+    runtime: 240

@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------------------
+# t2t-ont-refbias: hg38 vs T2T-CHM13 reference-bias comparison for ONT data
+# ---------------------------------------------------------------------------
+
+samples: config/samples.tsv
+outdir: results
+
+threads:
+  align: 16
+  default: 4
+
+# Two references. Keys must be "hg38" and "chm13" (used in file names).
+references:
+  hg38:
+    fasta: /path/to/refs/GCA_000001405.15_GRCh38_no_alt_analysis_set.fasta
+    # Optional BED (hg38 coords) of regions to drop: segmental duplications,
+    # non-syntenic-to-CHM13 regions, blacklists. "" to skip.
+    exclude_bed: /path/to/refs/hg38.exclude.bed
+  chm13:
+    fasta: /path/to/refs/chm13v2.0.fa
+    # Optional BED (CHM13 coords): chm13v2.0 SDs + non-syntenic (marbl/CHM13).
+    exclude_bed: /path/to/refs/chm13v2.0.exclude.bed
+
+# UCSC chain hg38 -> hs1 (hg38ToHs1.over.chain.gz)
+chain_hg38_to_chm13: /path/to/refs/hg38ToHs1.over.chain.gz
+
+# How to run Picard. "picard" (bioconda wrapper) or "java -Xmx8g -jar /path/picard.jar"
+picard: picard
+
+alignment:
+  # lr:hq for R10.4.1 SUP/HAC (minimap2 >= 2.27); map-ont for older data
+  preset: lr:hq
+  # -y copies the MM/ML tags that `samtools fastq -T '*'` puts in the read comment
+  extra: "-y --secondary=no"
+  sort_threads: 4
+  sort_mem_per_thread: 2G
+
+# Where per-sample heterozygous SNPs (hg38 coordinates) come from.
+#   provided : use the het_vcf column in samples.tsv (e.g. Clair3/DeepVariant calls)
+#   clair3   : run Clair3 on the hg38 alignment (needs clair3 + model below)
+#   bcftools : bcftools call on the hg38 alignment (quick; for testing only)
+het_sites:
+  source: provided
+  clair3_model: /path/to/clair3_models/r1041_e82_400bps_sup_v500
+  clair3_platform: ont
+  min_qual: 20
+  min_depth: 20          # depth in the caller's VCF (FORMAT/DP or INFO/DP)
+  vaf_min: 0.2
+  vaf_max: 0.8
+  homopolymer_len: 5     # drop SNPs touching a run of >= this many identical bases
+  homopolymer_flank: 5   # ... anywhere within +/- this many bp (checked on BOTH refs)
+
+# Allele counting at the shared site set
+pileup:
+  min_mapq: 20
+  min_baseq: 15
+  max_depth: 100000
+
+# Pairwise comparison of the +/- window around each site between references
+proximal_window: 150
+
+stats:
+  min_cov: 20                 # depth required in BOTH alignments
+  delta_vaf: 0.005            # |VAF_chm13 - VAF_hg38| >= this -> "incoherent"
+  high_cov: 60                # RMB peak analysis restricted to sites >= this depth
+  coverage_bins: [20, 30, 40, 60, 100, 200]
+
+# Optional: ClinVar pathogenic/likely-pathogenic SNVs (hg38 VCF, e.g. clinvar.vcf.gz).
+# Leave "" to skip. Sites are lifted to CHM13 with the same chain and counted
+# in every sample's two alignments.
+clinvar:
+  vcf: ""
+  min_alt_reads: 3

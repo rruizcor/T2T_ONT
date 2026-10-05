@@ -1,0 +1,5 @@
+sample	reads	bam_hg38	bam_chm13	het_vcf
+# Mode A (realign): give `reads` (Dorado unaligned BAM or FASTQ[.gz]); leave bam_* empty.
+# Mode B (pre-aligned, e.g. 1kGP ONT Vienna CRAMs): give bam_hg38 + bam_chm13; leave reads empty.
+# het_vcf: hg38-coordinate germline calls, required when het_sites.source == provided.
+HG002	/data/ont/HG002.sup.ubam			/data/ont/HG002.clair3.hg38.vcf.gz
